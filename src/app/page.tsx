@@ -1,23 +1,13 @@
-import dynamic from "next/dynamic";
+import Blog from "@/components/shared/Blog";
 import CategoryGrid from "@/components/shared/CategoryGrid";
+import MainCategories from "@/components/shared/MainCategories";
 import MainProducts from "@/components/shared/MainProducts";
-
-// Dynamically import heavy Swiper-based components with SSR disabled
-const VideoSlider = dynamic(() => import('@/components/shared/VideoSlider'), {
-  ssr: false,
-  loading: () => <div style={{ height: 700 }}>Loading video...</div>,
-});
-const MainCategories = dynamic(() => import('@/components/shared/MainCategories'), {
-  ssr: false,
-});
-const Blog = dynamic(() => import('@/components/shared/Blog'), {
-  ssr: false,
-});
+import VideoSliderContainer from "@/components/shared/VideoSliderContainer";
 
 export default function Home() {
   return (
     <>
-      <VideoSlider />
+      <VideoSliderContainer />
       <MainCategories title="Для вас" />
       <CategoryGrid />
       <MainProducts title="Новинки" />

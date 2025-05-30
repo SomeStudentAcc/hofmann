@@ -8,6 +8,8 @@ import { Navigation, Pagination } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "../../app/assets/BannerSwiper.css";
 
+
+
 export default function VideoSlider() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<HTMLVideoElement[]>([]);
