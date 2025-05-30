@@ -25,7 +25,7 @@ export default function Sales() {
             <Link key={i} href={"/sales/1"} className=" bg-[#161616]  relative">
               <div>
                 <Image
-                  src={"/banner.jvg"}
+                  src={"/banner.jpg"}
                   width={420}
                   height={500}
                   className="w-full"
