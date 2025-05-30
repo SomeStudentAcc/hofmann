@@ -28,7 +28,7 @@ export default function BlogItem() {
         <div>
           <div className="mb-5">
             <Image
-              src={"/banner.jpg"}
+              src={"/banner2.jpg"}
               width={10000}
               height={400}
               className="w-full"
