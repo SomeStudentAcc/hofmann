@@ -2,6 +2,7 @@
 import BranchesMap from "@/components/shared/BranchesMap";
 import BranchSingle from "@/components/shared/BranchSingle";
 import Breadcrumbs from "@/components/shared/Breadcrumbs";
+import { LazyBranchMap } from "@/components/shared/LazyBranchMap";
 import React, { useState } from "react";
 
 const scrums = [
@@ -52,7 +53,7 @@ export default function Branches() {
             </div>
           ) : (
             <div className="w-full mb-20">
-              <BranchesMap />
+              <LazyBranchMap />
             </div>
           )}
         </div>
