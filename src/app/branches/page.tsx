@@ -1,5 +1,4 @@
 "use client";
-import BranchesMap from "@/components/shared/BranchesMap";
 import BranchSingle from "@/components/shared/BranchSingle";
 import Breadcrumbs from "@/components/shared/Breadcrumbs";
 import { LazyBranchMap } from "@/components/shared/LazyBranchMap";
