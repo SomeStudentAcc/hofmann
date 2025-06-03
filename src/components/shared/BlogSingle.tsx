@@ -5,7 +5,7 @@ import React from "react";
 export default function BlogSingle() {
   return (
     <Link href={'/blog/1'} className=" bg-[#161616]  relative">
-      <div>
+      <div className="h-auto max-h-[360px]">
         <Image
           src={"/blog.webp"}
           width={420}
