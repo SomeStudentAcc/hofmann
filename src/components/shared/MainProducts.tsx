@@ -7,7 +7,12 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import type SwiperType from "swiper";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import ProductCard from "./ProductCard";
+import dynamic from "next/dynamic";
+
+const ProductCard = dynamic(() => import("./ProductCard"), {
+  loading: () => <div>Loading...</div>,
+  ssr: false,
+});
 
 interface Props {
   title: string;
@@ -15,7 +20,6 @@ interface Props {
 
 export default function MainProducts({ title }: Props) {
   const swiperRef = useRef<SwiperType | null>(null);
-
   const [isBeginning, setIsBeginning] = useState(true);
   const [isEnd, setIsEnd] = useState(false);
 

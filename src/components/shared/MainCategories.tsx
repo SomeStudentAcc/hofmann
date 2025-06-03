@@ -7,7 +7,13 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import type SwiperType from "swiper";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import MainCategorySingle from "./MainCategorySingle";
+import dynamic from "next/dynamic";
+
+// ✅ Correct placement of dynamic import
+const MainCategorySingle = dynamic(() => import("./MainCategorySingle"), {
+  loading: () => <div>Loading...</div>,
+  ssr: false,
+});
 
 interface Props {
   title: string;
@@ -121,12 +127,6 @@ export default function MainCategories({ title }: Props) {
               1024: {
                 slidesPerView: 2,
               },
-              /* 1360: {
-                slidesPerView: 2,
-              },
-              1450: {
-                slidesPerView: 2,
-              }, */
             }}
           >
             {[...Array(7)].map((_, i) => (

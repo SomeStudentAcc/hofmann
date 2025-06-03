@@ -10,3 +10,4 @@ const VideoSlider = dynamic(() => import("./VideoSlider"), {
 export default function VideoSliderContainer() {
   return <VideoSlider />;
 }
+   
