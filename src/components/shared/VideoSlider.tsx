@@ -1,96 +1,63 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef,  useCallback } from "react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { Swiper, SwiperSlide, useSwiperSlide } from "swiper/react";
+import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "../../app/assets/BannerSwiper.css";
 
-/**
- * SlideVideo now takes an `id` (string) instead of an index.
- * We store each video element in videoRefs.current[id] so that
- * even clones share the same id key.
- */
-function SlideVideo({
-  id,
-  src,
-  videoRefs,
-  onVideoEnd,
-}: {
-  id: string;
-  src: string;
-  videoRefs: React.MutableRefObject<Record<string, HTMLVideoElement>>;
-  onVideoEnd: () => void;
-}) {
-  const { isActive } = useSwiperSlide();
-
-  // Whenever this slide becomes active/inactive, play or pause
-  useEffect(() => {
-    const vid = videoRefs.current[id];
-    if (!vid) return;
-
-    if (isActive) {
-      vid
-        .play()
-        .catch((err) => {
-          console.warn(`Video (${id}) play() error:`, err);
-        });
-    } else {
-      vid.pause();
-      vid.currentTime = 0;
-    }
-  }, [isActive, id, videoRefs]);
-
-  // Attach the ref once for this id
-  const setRef = useCallback(
-    (el: HTMLVideoElement | null) => {
-      if (el) {
-        videoRefs.current[id] = el;
-      }
-    },
-    [id, videoRefs]
-  );
-
-  return (
-    <video
-      ref={setRef}
-      className="w-full min-h-[700px] h-full object-cover"
-      src={src}
-      muted
-      playsInline
-      autoPlay={false} // we control play() “manually” in the effect
-      preload="auto"
-      onEnded={onVideoEnd}
-    />
-  );
-}
-
 export default function VideoSlider() {
   const swiperRef = useRef<SwiperType | null>(null);
-  // Now using an object keyed by `id` instead of an array
-  const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
+  // Keep refs to all video elements in an array
+  const videoRefs = useRef<HTMLVideoElement[]>([]);
 
+  // List of videos (you could add an `id` field if you want, but index works fine here)
+  const videos = [
+    { src: "/video11.mp4" },
+    { src: "/video22.mp4" },
+    { src: "/video33.mp4" },
+  ];
+
+  // When the “real” index changes (i.e. Swiper has settled on a new slide),
+  // pause/reset every video, then play just the current one.
+  const handleRealIndexChange = useCallback((swiper: SwiperType) => {
+    const idx = swiper.realIndex; // 0, 1, or 2 (never a clone index)
+    videoRefs.current.forEach((vid, i) => {
+      if (!vid) return;
+      vid.pause();
+      vid.currentTime = 0;
+      // If this is the active “real” index, play it
+      if (i === idx) {
+        vid
+          .play()
+          .catch((err) => {
+            console.warn(`Video ${i} play() error:`, err);
+          });
+      }
+    });
+  }, []);
+
+  // Save Swiper instance
+  const handleSwiperInit = useCallback((swiper: SwiperType) => {
+    swiperRef.current = swiper;
+    // As soon as Swiper is ready, trigger a play on slide 0
+    // (loop clones exist, but realIndex starts at 0)
+    swiper.on("init", () => {
+      handleRealIndexChange(swiper);
+    });
+  }, [handleRealIndexChange]);
+
+  // If you want to move to the next slide when a video ends:
   const handleVideoEnd = useCallback(() => {
     swiperRef.current?.slideNext();
   }, []);
 
-  const handleSwiperInit = useCallback((swiper: SwiperType) => {
-    swiperRef.current = swiper;
-  }, []);
-
+  // Whenever Swiper’s realIndex changes (after transition), call our handler
   const handleSlideChange = useCallback((swiper: SwiperType) => {
-    // No need to sync an index in state; each SlideVideo watches isActive itself.
-  }, []);
-
-  // Array of { id, src } instead of just strings
-  const videos: { id: string; src: string }[] = [
-    { id: "vid1", src: "/video11.mp4" },
-    { id: "vid2", src: "/video22.mp4" },
-    { id: "vid3", src: "/video33.mp4" },
-  ];
+    handleRealIndexChange(swiper);
+  }, [handleRealIndexChange]);
 
   return (
     <div className="mb-20 w-full relative">
@@ -107,14 +74,21 @@ export default function VideoSlider() {
         onSwiper={handleSwiperInit}
         onSlideChange={handleSlideChange}
       >
-        {videos.map(({ id, src }) => (
-          <SwiperSlide key={id} className="select-none w-full">
+        {videos.map((video, i) => (
+          <SwiperSlide key={i} className="select-none w-full">
             <div className="relative w-full overflow-hidden">
-              <SlideVideo
-                id={id}
-                src={src}
-                videoRefs={videoRefs}
-                onVideoEnd={handleVideoEnd}
+              <video
+                ref={(el) => {
+                  if (el) {
+                    videoRefs.current[i] = el;
+                  }
+                }}
+                className="w-full min-h-[700px] h-full object-cover"
+                src={video.src}
+                muted
+                playsInline
+                preload="auto"
+                onEnded={handleVideoEnd}
               />
             </div>
           </SwiperSlide>
