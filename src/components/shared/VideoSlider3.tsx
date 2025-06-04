@@ -83,7 +83,7 @@ export default function VideoSlider3() {
   }, []);
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative mb-20">
       <Swiper
         slidesPerView={1}
         centeredSlides
