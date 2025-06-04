@@ -3,10 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/shared/Nav";
 import Footer from "@/components/shared/Footer";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: [ "400", "500", "600", "700",],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -25,7 +26,10 @@ export default function RootLayout({
         className={`${inter.className}  min-h-screen flex flex-col  antialiased`}
       >
         <Nav />
-        <main className="flex-grow">{children}</main>
+        <main className="flex-grow">
+          {children}
+          <SpeedInsights />
+        </main>
         <Footer />
       </body>
     </html>
