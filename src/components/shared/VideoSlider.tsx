@@ -11,7 +11,7 @@ import "../../app/assets/BannerSwiper.css";
 export default function VideoSlider() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<HTMLVideoElement[]>([]);
-  const isPlayingRef = useRef<boolean[]>([]);
+  const hasUserInteracted = useRef(false);
 
   const videos = [
     { src: "/video11.mp4" },
@@ -19,127 +19,68 @@ export default function VideoSlider() {
     { src: "/video33.mp4" },
   ];
 
-  // Helper function to safely play video with better error handling
-  const safePlayVideo = useCallback(
-    async (video: HTMLVideoElement, index: number) => {
-      if (!video) return false;
+  const handleRealIndexChange = useCallback(async (swiper: SwiperType) => {
+    const idx = swiper.realIndex;
+    
+    // Pause all videos and reset
+    videoRefs.current.forEach((vid) => {
+      if (!vid) return;
+      vid.pause();
+      vid.currentTime = 0;
+    });
 
-      try {
-        // Reset video state
-        video.currentTime = 0;
-
-        // Ensure video is loaded
-        if (video.readyState < 2) {
-          await new Promise((resolve) => {
-            const handleCanPlay = () => {
-              video.removeEventListener("canplay", handleCanPlay);
-              resolve(void 0);
-            };
-            video.addEventListener("canplay", handleCanPlay);
-            video.load(); // Force reload
-          });
-        }
-
-        await video.play();
-        isPlayingRef.current[index] = true;
-        return true;
-      } catch (err) {
-        console.warn(`Video ${index} play() error:`, err);
-        isPlayingRef.current[index] = false;
-
-        // On mobile, sometimes we need user interaction first
-        // Try to play again after a short delay
-        setTimeout(async () => {
-          try {
-            await video.play();
-            isPlayingRef.current[index] = true;
-          } catch (retryErr) {
-            console.warn(`Video ${index} retry play() error:`, retryErr);
-          }
-        }, 100);
-
-        return false;
-      }
-    },
-    []
-  );
-
-  // Enhanced video management
-  const handleRealIndexChange = useCallback(
-    async (swiper: SwiperType) => {
-      const idx = swiper.realIndex;
-
-      // First pause all videos
-      videoRefs.current.forEach((vid, i) => {
-        if (vid && isPlayingRef.current[i]) {
-          vid.pause();
-          isPlayingRef.current[i] = false;
-        }
-      });
-
-      // Small delay to ensure pause is processed
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // Then play the current video
+    // Small delay to ensure pause is processed
+    setTimeout(() => {
       const currentVideo = videoRefs.current[idx];
       if (currentVideo) {
-        await safePlayVideo(currentVideo, idx);
+        currentVideo.play().catch((err) => {
+          console.warn(`Video ${idx} play() error:`, err);
+        });
       }
-    },
-    [safePlayVideo]
-  );
+    }, 50);
+  }, []);
 
-  // Enhanced Swiper initialization
-  const handleSwiperInit = useCallback(
-    (swiper: SwiperType) => {
-      swiperRef.current = swiper;
-
-      // Initialize playing state array
-      isPlayingRef.current = new Array(videos.length).fill(false);
-
-      // Wait for DOM to be ready then start first video
-      setTimeout(() => {
-        handleRealIndexChange(swiper);
-      }, 100);
-    },
-    [handleRealIndexChange, videos.length]
-  );
+  const handleSwiperInit = useCallback((swiper: SwiperType) => {
+    swiperRef.current = swiper;
+    
+    // Start first video after a short delay
+    setTimeout(() => {
+      handleRealIndexChange(swiper);
+    }, 100);
+  }, [handleRealIndexChange]);
 
   const handleVideoEnd = useCallback(() => {
     swiperRef.current?.slideNext();
   }, []);
 
-  const handleSlideChange = useCallback(
-    (swiper: SwiperType) => {
-      handleRealIndexChange(swiper);
-    },
-    [handleRealIndexChange]
-  );
+  const handleSlideChange = useCallback((swiper: SwiperType) => {
+    handleRealIndexChange(swiper);
+  }, [handleRealIndexChange]);
 
-  // Handle user interaction to enable autoplay on mobile
+  // Handle first user interaction for mobile
   useEffect(() => {
     const handleUserInteraction = () => {
+      hasUserInteracted.current = true;
+      
       // Try to play current video after user interaction
       if (swiperRef.current) {
         const currentIndex = swiperRef.current.realIndex;
         const currentVideo = videoRefs.current[currentIndex];
-        if (currentVideo && !isPlayingRef.current[currentIndex]) {
-          safePlayVideo(currentVideo, currentIndex);
+        if (currentVideo) {
+          currentVideo.currentTime = 0;
+          currentVideo.play().catch(console.warn);
         }
       }
     };
 
-    // Add event listeners for user interaction
-    document.addEventListener("touchstart", handleUserInteraction, {
-      once: true,
-    });
-    document.addEventListener("click", handleUserInteraction, { once: true });
+    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+    document.addEventListener('click', handleUserInteraction, { once: true });
 
     return () => {
-      document.removeEventListener("touchstart", handleUserInteraction);
-      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('click', handleUserInteraction);
     };
-  }, [safePlayVideo]);
+  }, []);
 
   return (
     <div className="mb-20 w-full relative">
@@ -155,10 +96,6 @@ export default function VideoSlider() {
         className="w-full"
         onSwiper={handleSwiperInit}
         onSlideChange={handleSlideChange}
-        // Add some mobile-specific settings
-        touchRatio={1}
-        touchAngle={45}
-        grabCursor={true}
       >
         {videos.map((video, i) => (
           <SwiperSlide key={i} className="select-none w-full">
@@ -173,21 +110,14 @@ export default function VideoSlider() {
                 src={video.src}
                 muted
                 playsInline
-                preload="metadata" // Changed from "auto" to reduce initial load
+                preload="auto"
                 onEnded={handleVideoEnd}
-                // Add mobile-specific attributes
-                webkit-playsinline="true"
-                x5-playsinline="true"
-                // Ensure video is ready for mobile
-                onLoadedData={() => {
-                  // Video data is loaded, ready to play if needed
-                  if (
-                    swiperRef.current?.realIndex === i &&
-                    !isPlayingRef.current[i]
-                  ) {
+                onCanPlay={() => {
+                  // When video can play and it's the current slide, try to play
+                  if (swiperRef.current?.realIndex === i && hasUserInteracted.current) {
                     const video = videoRefs.current[i];
-                    if (video) {
-                      safePlayVideo(video, i);
+                    if (video && video.paused) {
+                      video.play().catch(console.warn);
                     }
                   }
                 }}
