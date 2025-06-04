@@ -14,7 +14,7 @@ export default function BlogSingle() {
           alt=""
         />
       </div>
-      <p className="text-[#E4E4E4] p-3 absolute top-0 left-0 line-clamp-2">
+      <p className="text-[#E4E4E4] m-3 absolute top-0 left-0 line-clamp-2">
         Очистители и увлажнители воздуха: почему HOFMANN станет отличным выбором
       </p>
     </Link>
