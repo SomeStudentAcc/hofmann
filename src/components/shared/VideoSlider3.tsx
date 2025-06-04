@@ -92,6 +92,8 @@ export default function VideoSlider3() {
                 }}
                 className="w-full min-h-[700px] h-full object-cover"
                 muted
+                autoPlay
+                
                 playsInline
                 preload="metadata"
                 onEnded={onVideoEnded}
