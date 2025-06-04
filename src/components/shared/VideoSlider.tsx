@@ -52,7 +52,7 @@ export default function VideoSlider() {
   };
 
   // List of video sources
-  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4"]
+  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4"];
 
   return (
     <div className="mb-20 w-full relative">
