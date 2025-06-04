@@ -101,7 +101,11 @@ export default function VideoSlider3() {
           <SwiperSlide key={i} className="w-full min-h-[700px]">
             <div className="relative w-full h-full overflow-hidden">
               <video
-                ref={(el) => (videoRefs.current[i] = el)}
+                ref={(el) => {
+                  if (el) {
+                    videoRefs.current[i] = el;
+                  }
+                }}
                 className="w-full min-h-[700px] h-full object-cover"
                 muted
                 playsInline
