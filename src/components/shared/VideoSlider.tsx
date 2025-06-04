@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -11,76 +11,50 @@ import "../../app/assets/BannerSwiper.css";
 export default function VideoSlider() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<HTMLVideoElement[]>([]);
-  const hasUserInteracted = useRef(false);
+  // Keep track of which slide is “active”—initialize to 0 so first video is rendered immediately
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  const videos = [
-    { src: "/video11.mp4" },
-    { src: "/video22.mp4" },
-    { src: "/video33.mp4" },
-  ];
-
-  const handleRealIndexChange = useCallback(async (swiper: SwiperType) => {
-    const idx = swiper.realIndex;
-    
-    // Pause all videos and reset
-    videoRefs.current.forEach((vid) => {
-      if (!vid) return;
-      vid.pause();
-      vid.currentTime = 0;
-    });
-
-    // Small delay to ensure pause is processed
-    setTimeout(() => {
-      const currentVideo = videoRefs.current[idx];
-      if (currentVideo) {
-        currentVideo.play().catch((err) => {
-          console.warn(`Video ${idx} play() error:`, err);
-        });
-      }
-    }, 50);
-  }, []);
-
-  const handleSwiperInit = useCallback((swiper: SwiperType) => {
-    swiperRef.current = swiper;
-    
-    // Start first video after a short delay
-    setTimeout(() => {
-      handleRealIndexChange(swiper);
-    }, 100);
-  }, [handleRealIndexChange]);
-
-  const handleVideoEnd = useCallback(() => {
-    swiperRef.current?.slideNext();
-  }, []);
-
-  const handleSlideChange = useCallback((swiper: SwiperType) => {
-    handleRealIndexChange(swiper);
-  }, [handleRealIndexChange]);
-
-  // Handle first user interaction for mobile
+  // Whenever activeIndex changes, pause & reset all videos, then play the new one (if exists)
   useEffect(() => {
-    const handleUserInteraction = () => {
-      hasUserInteracted.current = true;
-      
-      // Try to play current video after user interaction
-      if (swiperRef.current) {
-        const currentIndex = swiperRef.current.realIndex;
-        const currentVideo = videoRefs.current[currentIndex];
-        if (currentVideo) {
-          currentVideo.currentTime = 0;
-          currentVideo.play().catch(console.warn);
-        }
-      }
-    };
+    videoRefs.current.forEach((v) => {
+      if (!v) return;
+      v.pause();
+      v.currentTime = 0;
+    });
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo
+        .play()
+        .catch((err) => {
+          console.warn("Video play error:", err);
+        });
+    }
+  }, [activeIndex]);
 
-    document.addEventListener('touchstart', handleUserInteraction, { once: true });
-    document.addEventListener('click', handleUserInteraction, { once: true });
+  // Called when swiper is first initialized
+  const handleSwiperInit = (swiper: SwiperType) => {
+    swiperRef.current = swiper;
+    setActiveIndex(swiper.realIndex); // usually 0 on first init
+  };
 
-    return () => {
-      document.removeEventListener('touchstart', handleUserInteraction);
-      document.removeEventListener('click', handleUserInteraction);
-    };
-  }, []);
+  // Called on every slide change
+  const handleSlideChange = (swiper: SwiperType) => {
+    const newIndex = swiper.realIndex;
+    setActiveIndex(newIndex);
+  };
+
+  // When a video ends, advance the swiper
+  const handleVideoEnd = () => {
+    swiperRef.current?.slideNext();
+  };
+
+  // Save refs for each <video>
+  const setVideoRef = (el: HTMLVideoElement, index: number) => {
+    videoRefs.current[index] = el;
+  };
+
+  // List of video sources
+  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
   return (
     <div className="mb-20 w-full relative">
@@ -88,7 +62,7 @@ export default function VideoSlider() {
         slidesPerView={1}
         observer={true}
         observeParents={true}
-        loop={true}
+        loop={true} // if you still want infinite loop, Swiper will clone slides—but only the clones matching activeIndex will mount/videos play
         pagination={{ clickable: true }}
         navigation={true}
         modules={[Navigation, Pagination]}
@@ -97,31 +71,28 @@ export default function VideoSlider() {
         onSwiper={handleSwiperInit}
         onSlideChange={handleSlideChange}
       >
-        {videos.map((video, i) => (
+        {videos.map((src, i) => (
           <SwiperSlide key={i} className="select-none w-full">
-            <div className="relative w-full overflow-hidden">
-              <video
-                ref={(el) => {
-                  if (el) {
-                    videoRefs.current[i] = el;
-                  }
-                }}
-                className="w-full min-h-[700px] h-full object-cover"
-                src={video.src}
-                muted
-                playsInline
-                preload="auto"
-                onEnded={handleVideoEnd}
-                onCanPlay={() => {
-                  // When video can play and it's the current slide, try to play
-                  if (swiperRef.current?.realIndex === i && hasUserInteracted.current) {
-                    const video = videoRefs.current[i];
-                    if (video && video.paused) {
-                      video.play().catch(console.warn);
-                    }
-                  }
-                }}
-              />
+            <div className="relative w-full  overflow-hidden">
+              {/**
+               * Only render the <video> if its index === activeIndex.
+               * That way, on first load (activeIndex=0), <video> at i=0 mounts immediately.
+               * When activeIndex changes, the old <video> unmounts and frees memory.
+               */}
+              {activeIndex === i && (
+                <video
+                  ref={(el) => {
+                    if (el) setVideoRef(el, i);
+                  }}
+                  className="w-full min-h-[700px] h-full object-cover"
+                  src={src}
+                  muted
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  onEnded={handleVideoEnd}
+                />
+              )}
             </div>
           </SwiperSlide>
         ))}
