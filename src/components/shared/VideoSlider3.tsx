@@ -19,22 +19,27 @@ export default function VideoSlider3() {
   const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
   // Function to unload non-active videos
-  const unloadInactiveVideos = (activeIndex: number) => {
-    videoRefs.current.forEach((video, idx) => {
-      if (!video) return;
-      if (idx === activeIndex) {
-        // Load video if not already loaded
-        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
-          video.src = videos[idx];
-          video.load();
-        }
-      } else {
-        video.pause();
-        video.removeAttribute("src");
-        video.load(); // Free memory
+ const unloadInactiveVideos = (activeIndex: number) => {
+  videoRefs.current.forEach((video, idx) => {
+    if (!video) return;
+
+    const shouldLoad = 
+      idx === activeIndex || 
+      idx === (activeIndex + 1) % videos.length || 
+      idx === (activeIndex - 1 + videos.length) % videos.length;
+
+    if (shouldLoad) {
+      if (!video.src || video.src.indexOf(videos[idx]) === -1) {
+        video.src = videos[idx];
+        video.load();
       }
-    });
-  };
+    } else {
+      video.pause();
+      video.removeAttribute("src");
+      video.load(); // free memory
+    }
+  });
+};
 
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
@@ -88,7 +93,7 @@ export default function VideoSlider3() {
         slidesPerView={1}
         centeredSlides
         loop
-        mousewheel
+        mousewheel       
         keyboard
         pagination={{ clickable: true }}
         navigation
