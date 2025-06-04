@@ -73,7 +73,7 @@ export default function VideoSlider3() {
       <Swiper
         slidesPerView={1}
         centeredSlides
-        loop
+        loop={false}
         mousewheel
         keyboard
         pagination={{ clickable: true }}
