@@ -16,7 +16,7 @@ export default function VideoSlider3() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [play, setPlay] = useState(true);
-  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
+  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4", "/video22.mp4",];
 
   // Function to unload non-active videos
   const unloadInactiveVideos = (activeIndex: number) => {
