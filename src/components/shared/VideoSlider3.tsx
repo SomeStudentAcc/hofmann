@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
@@ -13,59 +14,72 @@ import "../../app/assets/BannerSwiper.css";
 
 export default function VideoSlider3() {
   const swiperRef = useRef<SwiperType | null>(null);
-  const videoRefs = useRef<HTMLVideoElement[]>([]);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [play, setPlay] = useState(true);
-
   const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
+
+  // Function to unload non-active videos
+  const unloadInactiveVideos = (activeIndex: number) => {
+    videoRefs.current.forEach((video, idx) => {
+      if (!video) return;
+      if (idx === activeIndex) {
+        // Load video if not already loaded
+        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
+          video.src = videos[idx];
+          video.load();
+        }
+      } else {
+        video.pause();
+        video.removeAttribute("src");
+        video.load(); // Free memory
+      }
+    });
+  };
 
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
-
     const activeIndex = swiper.realIndex;
-    videoRefs.current.forEach((vid, idx) => {
-      if (!vid) return;
-      if (play && idx === activeIndex) {
-        vid.play().catch(() => {});
-      } else {
-        vid.pause();
-      }
-    });
-  }, [play]);
 
-  useEffect(() => {
-    togglePlay();
-  }, [togglePlay]);
+    unloadInactiveVideos(activeIndex);
 
-  const onSlideChange = useCallback((swiper: SwiperType) => {
-    const active = swiper.realIndex;
-    videoRefs.current.forEach((vid, idx) => {
-      if (!vid) return;
-      if (idx === active) {
-        vid.play().catch(() => {});
-        setPlay(true);
-      } else {
-        vid.pause();
-      }
-    });
-  }, []);
-
-  const onSwiperInit = useCallback((swiper: SwiperType) => {
-    swiperRef.current = swiper;
-    // Auto-play the very first video on mount
-    const firstVid = videoRefs.current[0];
-    if (firstVid) {
-      firstVid
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo
         .play()
         .then(() => setPlay(true))
         .catch(() => setPlay(false));
     }
   }, []);
 
+  useEffect(() => {
+    togglePlay();
+  }, [togglePlay]);
+
+  const onSlideChange = useCallback((swiper: SwiperType) => {
+    const activeIndex = swiper.realIndex;
+    unloadInactiveVideos(activeIndex);
+
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo
+        .play()
+        .then(() => setPlay(true))
+        .catch(() => setPlay(false));
+    }
+  }, []);
+
+  const onSwiperInit = useCallback(
+    (swiper: SwiperType) => {
+      swiperRef.current = swiper;
+      togglePlay();
+    },
+    [togglePlay]
+  );
+
   const onVideoEnded = useCallback(() => {
-    // Advance to next slide when the current video finishes
     swiperRef.current?.slideNext();
-    setPlay(true); // ensure the next video is allowed to play
+    setPlay(true);
   }, []);
 
   return (
@@ -87,19 +101,13 @@ export default function VideoSlider3() {
           <SwiperSlide key={i} className="w-full min-h-[700px]">
             <div className="relative w-full h-full overflow-hidden">
               <video
-                ref={(el) => {
-                  if (el) videoRefs.current[i] = el;
-                }}
+                ref={(el) => (videoRefs.current[i] = el)}
                 className="w-full min-h-[700px] h-full object-cover"
                 muted
-                autoPlay
-                
                 playsInline
                 preload="metadata"
                 onEnded={onVideoEnded}
-              >
-                <source src={src} type="video/mp4" />
-              </video>
+              />
             </div>
           </SwiperSlide>
         ))}
