@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -11,47 +11,48 @@ import "../../app/assets/BannerSwiper.css";
 export default function VideoSlider() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<HTMLVideoElement[]>([]);
+  // Keep track of which slide is “active”—initialize to 0 so first video is rendered immediately
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  const videos = [
-    { src: "/video11.mp4" },
-    { src: "/video22.mp4" },
-    { src: "/video33.mp4" },
-  ];
-
-  const handleRealIndexChange = useCallback((swiper: SwiperType) => {
-    const idx = swiper.realIndex;
-    
-    videoRefs.current.forEach((vid, i) => {
-      if (!vid) return;
-      vid.pause();
-      vid.currentTime = 0;
-      
-      if (i === idx) {
-        // Add small delay for mobile
-        setTimeout(() => {
-          vid.play().catch((err) => {
-            console.warn(`Video ${i} play() error:`, err);
-          });
-        }, 100);
-      }
+  // Whenever activeIndex changes, pause & reset all videos, then play the new one (if exists)
+  useEffect(() => {
+    videoRefs.current.forEach((v) => {
+      if (!v) return;
+      v.pause();
+      v.currentTime = 0;
     });
-  }, []);
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo.play().catch((err) => {
+        console.warn("Video play error:", err);
+      });
+    }
+  }, [activeIndex]);
 
-  const handleSwiperInit = useCallback((swiper: SwiperType) => {
+  // Called when swiper is first initialized
+  const handleSwiperInit = (swiper: SwiperType) => {
     swiperRef.current = swiper;
-    
-    setTimeout(() => {
-      handleRealIndexChange(swiper);
-    }, 200);
-  }, [handleRealIndexChange]);
+    setActiveIndex(swiper.realIndex); // usually 0 on first init
+  };
 
-  const handleVideoEnd = useCallback(() => {
+  // Called on every slide change
+  const handleSlideChange = (swiper: SwiperType) => {
+    const newIndex = swiper.realIndex;
+    setActiveIndex(newIndex);
+  };
+
+  // When a video ends, advance the swiper
+  const handleVideoEnd = () => {
     swiperRef.current?.slideNext();
-  }, []);
+  };
 
-  const handleSlideChange = useCallback((swiper: SwiperType) => {
-    handleRealIndexChange(swiper);
-  }, [handleRealIndexChange]);
+  // Save refs for each <video>
+  const setVideoRef = (el: HTMLVideoElement, index: number) => {
+    videoRefs.current[index] = el;
+  };
+
+  // List of video sources
+  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4"]
 
   return (
     <div className="mb-20 w-full relative">
@@ -59,7 +60,7 @@ export default function VideoSlider() {
         slidesPerView={1}
         observer={true}
         observeParents={true}
-        loop={true}
+        loop={true} // if you still want infinite loop, Swiper will clone slides—but only the clones matching activeIndex will mount/videos play
         pagination={{ clickable: true }}
         navigation={true}
         modules={[Navigation, Pagination]}
@@ -68,22 +69,28 @@ export default function VideoSlider() {
         onSwiper={handleSwiperInit}
         onSlideChange={handleSlideChange}
       >
-        {videos.map((video, i) => (
+        {videos.map((src, i) => (
           <SwiperSlide key={i} className="select-none w-full">
-            <div className="relative w-full overflow-hidden">
-              <video
-                ref={(el) => {
-                  if (el) {
-                    videoRefs.current[i] = el;
-                  }
-                }}
-                className="w-full min-h-[700px] h-full object-cover"
-                src={video.src}
-                muted
-                playsInline
-                preload="auto"
-                onEnded={handleVideoEnd}
-              />
+            <div className="relative w-full  overflow-hidden">
+              {/**
+               * Only render the <video> if its index === activeIndex.
+               * That way, on first load (activeIndex=0), <video> at i=0 mounts immediately.
+               * When activeIndex changes, the old <video> unmounts and frees memory.
+               */}
+              {activeIndex === i && (
+                <video
+                  ref={(el) => {
+                    if (el) setVideoRef(el, i);
+                  }}
+                  className="w-full min-h-[700px] h-full object-cover"
+                  src={src}
+                  muted
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  onEnded={handleVideoEnd}
+                />
+              )}
             </div>
           </SwiperSlide>
         ))}
