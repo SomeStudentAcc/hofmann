@@ -7,13 +7,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import type SwiperType from "swiper";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import dynamic from "next/dynamic";
-
-// ✅ Correct placement of dynamic import
-const MainCategorySingle = dynamic(() => import("./MainCategorySingle"), {
-  loading: () => <div>Loading...</div>,
-  ssr: false,
-});
+import MainCategorySingle from "./MainCategorySingle";
 
 interface Props {
   title: string;
