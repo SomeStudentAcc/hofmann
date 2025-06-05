@@ -70,7 +70,7 @@ export default function VideoSlider3() {
         pagination={{ clickable: true }}
         navigation
         // ✅ No autoplay config here
-        modules={[Navigation, Pagination]} // ✅ Autoplay NOT included
+        modules={[Navigation, Pagination]}
         className="w-full"
         onSwiper={onSwiperInit}
         onSlideChange={onSlideChange}
@@ -85,10 +85,16 @@ export default function VideoSlider3() {
                 className="w-full min-h-[700px] h-full object-cover"
                 src={src}
                 muted
-                autoPlay
+                loop
                 playsInline
                 preload="auto"
                 onEnded={() => setPlay(false)}
+                onCanPlay={() => {
+                  const swiper = swiperRef.current;
+                  if (swiper?.realIndex === i) {
+                    videoRefs.current[i]?.play().catch(() => setPlay(false));
+                  }
+                }}
               />
             </div>
           </SwiperSlide>
