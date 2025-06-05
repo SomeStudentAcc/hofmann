@@ -97,7 +97,6 @@ export default function VideoSlider3() {
         slidesPerView={1}
         centeredSlides
         loop
-        mousewheel
         keyboard
         pagination={{ clickable: true }}
         navigation

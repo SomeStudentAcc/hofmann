@@ -112,10 +112,6 @@ export default function VideoSlider2() {
         loop={true}
         mousewheel={true}
         keyboard={true}
-        autoplay={{
-          delay: 6500,
-          disableOnInteraction: false,
-        }}
         // Pagination + Navigation
         pagination={{ clickable: true }}
         navigation={true}
@@ -134,6 +130,7 @@ export default function VideoSlider2() {
                 className="w-full min-h-[700px] h-full object-cover"
                 loop
                 muted
+                autoPlay
                 playsInline
                 preload="metadata"
                 onEnded={onVideoEnded}
