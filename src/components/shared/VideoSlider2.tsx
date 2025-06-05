@@ -16,71 +16,48 @@ export default function VideoSlider3() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [play, setPlay] = useState(true);
-  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4", "/video33.mp4", "/video22.mp4",];
 
-  // Function to unload non-active videos
-  const unloadInactiveVideos = (activeIndex: number) => {
+  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
+
+  const handleVideoPlayback = useCallback((activeIndex: number) => {
     videoRefs.current.forEach((video, idx) => {
       if (!video) return;
       if (idx === activeIndex) {
-        // Load video if not already loaded
-        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
-          video.src = videos[idx];
-          video.load();
-        }
+        video
+          .play()
+          .then(() => setPlay(true))
+          .catch(() => setPlay(false));
       } else {
         video.pause();
-        video.removeAttribute("src");
-        video.load(); // Free memory
+        video.currentTime = 0;
       }
     });
-  };
+  }, []);
 
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
-    const activeIndex = swiper.realIndex;
-
-    unloadInactiveVideos(activeIndex);
-
-    const activeVideo = videoRefs.current[activeIndex];
-    if (activeVideo) {
-      activeVideo
-        .play()
-        .then(() => setPlay(true))
-        .catch(() => setPlay(false));
-    }
-  }, []);
+    handleVideoPlayback(swiper.realIndex);
+  }, [handleVideoPlayback]);
 
   useEffect(() => {
     togglePlay();
   }, [togglePlay]);
 
-  const onSlideChange = useCallback((swiper: SwiperType) => {
-    const activeIndex = swiper.realIndex;
-    unloadInactiveVideos(activeIndex);
-
-    const activeVideo = videoRefs.current[activeIndex];
-    if (activeVideo) {
-      activeVideo
-        .play()
-        .then(() => setPlay(true))
-        .catch(() => setPlay(false));
-    }
-  }, []);
+  const onSlideChange = useCallback(
+    (swiper: SwiperType) => {
+      handleVideoPlayback(swiper.realIndex);
+    },
+    [handleVideoPlayback]
+  );
 
   const onSwiperInit = useCallback(
     (swiper: SwiperType) => {
       swiperRef.current = swiper;
-      togglePlay();
+      handleVideoPlayback(swiper.realIndex);
     },
-    [togglePlay]
+    [handleVideoPlayback]
   );
-
-  const onVideoEnded = useCallback(() => {
-    swiperRef.current?.slideNext();
-    setPlay(true);
-  }, []);
 
   return (
     <div className="w-full relative">
@@ -92,7 +69,8 @@ export default function VideoSlider3() {
         keyboard
         pagination={{ clickable: true }}
         navigation
-        modules={[Navigation, Pagination]}
+        // ✅ No autoplay config here
+        modules={[Navigation, Pagination]} // ✅ Autoplay NOT included
         className="w-full"
         onSwiper={onSwiperInit}
         onSlideChange={onSlideChange}
@@ -102,16 +80,15 @@ export default function VideoSlider3() {
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
-                  if (el) {
-                    videoRefs.current[i] = el;
-                  }
+                  videoRefs.current[i] = el;
                 }}
-                className="w-full h-full min-h-[700px]  object-cover"
+                className="w-full min-h-[700px] h-full object-cover"
+                src={src}
                 muted
                 autoPlay
                 playsInline
-                preload="metadata"
-                onEnded={onVideoEnded}
+                preload="auto"
+                onEnded={() => setPlay(false)}
               />
             </div>
           </SwiperSlide>
