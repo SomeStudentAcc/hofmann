@@ -1,77 +1,118 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+
 import "../../app/assets/BannerSwiper.css";
 
-
-const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
-
-export default function VideoSlider() {
+export default function VideoSlider3() {
+  const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const [play, setPlay] = useState(true);
+  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4", "/video33.mp4", "/video22.mp4",];
 
-  const handleSlideChange = (swiper: any) => {
-    videoRefs.current.forEach((video, index) => {
+  // Function to unload non-active videos
+  const unloadInactiveVideos = (activeIndex: number) => {
+    videoRefs.current.forEach((video, idx) => {
       if (!video) return;
-
-      if (
-        index === swiper.realIndex ||
-        index === (swiper.realIndex + 1) % videos.length
-      ) {
-        video.play().catch(() => {});
+      if (idx === activeIndex) {
+        // Load video if not already loaded
+        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
+          video.src = videos[idx];
+          video.load();
+        }
       } else {
         video.pause();
+        video.removeAttribute("src");
+        video.load(); // Free memory
       }
     });
   };
 
-  useEffect(() => {
-    // Play first video after mount
-    const firstVideo = videoRefs.current[0];
-    if (firstVideo) {
-      firstVideo.play().catch(() => {});
+  const togglePlay = useCallback(() => {
+    const swiper = swiperRef.current;
+    if (!swiper) return;
+    const activeIndex = swiper.realIndex;
+
+    unloadInactiveVideos(activeIndex);
+
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo
+        .play()
+        .then(() => setPlay(true))
+        .catch(() => setPlay(false));
     }
   }, []);
 
+  useEffect(() => {
+    togglePlay();
+  }, [togglePlay]);
+
+  const onSlideChange = useCallback((swiper: SwiperType) => {
+    const activeIndex = swiper.realIndex;
+    unloadInactiveVideos(activeIndex);
+
+    const activeVideo = videoRefs.current[activeIndex];
+    if (activeVideo) {
+      activeVideo
+        .play()
+        .then(() => setPlay(true))
+        .catch(() => setPlay(false));
+    }
+  }, []);
+
+  const onSwiperInit = useCallback(
+    (swiper: SwiperType) => {
+      swiperRef.current = swiper;
+      togglePlay();
+    },
+    [togglePlay]
+  );
+
+  const onVideoEnded = useCallback(() => {
+    swiperRef.current?.slideNext();
+    setPlay(true);
+  }, []);
+
   return (
-    <div className="relative w-full h-[700px] mb-20">
+    <div className="w-full relative">
       <Swiper
+        slidesPerView={1}
+        centeredSlides
         loop
-        autoplay={{
-          delay: 6500,
-          disableOnInteraction: false,
-        }}
+        mousewheel
+        keyboard
         pagination={{ clickable: true }}
         navigation
-        keyboard
-        mousewheel
-        onSlideChange={handleSlideChange}
-        modules={[Autoplay, Pagination, Navigation]}
-        className="w-full h-full"
+        modules={[Navigation, Pagination]}
+        className="w-full"
+        onSwiper={onSwiperInit}
+        onSlideChange={onSlideChange}
       >
-        {videos.map((videoSrc, index) => (
-          <SwiperSlide key={index} className="relative w-full h-full">
-            <div className="relative w-full h-full">
+        {videos.map((src, i) => (
+          <SwiperSlide key={i} className="w-full min-h-[700px]">
+            <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
                   if (el) {
-                    videoRefs.current[index] = el;
+                    videoRefs.current[i] = el;
                   }
                 }}
-                className="w-full h-full object-cover"
+                className="w-full h-full min-h-[700px]  object-cover"
                 muted
+                autoPlay
                 playsInline
                 preload="metadata"
-              >
-                <source src={videoSrc} type="video/mp4" />
-              </video>
-
-             
+                onEnded={onVideoEnded}
+              />
             </div>
           </SwiperSlide>
         ))}
