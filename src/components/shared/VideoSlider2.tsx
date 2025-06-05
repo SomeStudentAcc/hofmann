@@ -8,11 +8,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-const videos = [
-  "/video/newVideo1.mp4",
-  "/video/newVideo2.mp4",
-  "/video/newVideo3.mp4",
-];
+const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
 export default function VideoSlider() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
