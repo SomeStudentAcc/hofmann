@@ -29,8 +29,8 @@ export default function VideoSlider3() {
       idx === (activeIndex - 1 + videos.length) % videos.length;
 
     if (shouldLoad) {
-      if (!video.src || video.src.indexOf(videos[idx]) === -1) {
-        video.src = videos[idx];
+      if (!video.getAttribute("src")) {
+        video.setAttribute("src", videos[idx]);
         video.load();
       }
     } else {
@@ -93,7 +93,7 @@ export default function VideoSlider3() {
         slidesPerView={1}
         centeredSlides
         loop
-        mousewheel       
+        mousewheel
         keyboard
         pagination={{ clickable: true }}
         navigation
@@ -107,15 +107,14 @@ export default function VideoSlider3() {
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
-                  if (el) {
-                    videoRefs.current[i] = el;
-                  }
+                  if (el) videoRefs.current[i] = el;
                 }}
                 className="w-full min-h-[700px] h-full object-cover"
                 muted
                 autoPlay
                 playsInline
                 preload="metadata"
+                src={i === 0 || i === 1 ? videos[i] : undefined}
                 onEnded={onVideoEnded}
               />
             </div>
