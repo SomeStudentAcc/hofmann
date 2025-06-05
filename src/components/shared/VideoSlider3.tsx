@@ -16,31 +16,22 @@ export default function VideoSlider3() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [play, setPlay] = useState(true);
-  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
+  const videos = ["/video11.mp4", "/video33.mp4", "/video22.mp4", "/video33.mp4", "/video22.mp4",];
 
+  // Function to unload non-active videos
   const unloadInactiveVideos = (activeIndex: number) => {
     videoRefs.current.forEach((video, idx) => {
       if (!video) return;
-
-      const shouldLoad =
-        idx === activeIndex ||
-        idx === (activeIndex + 1) % videos.length ||
-        idx === (activeIndex - 1 + videos.length) % videos.length;
-
-      if (shouldLoad) {
-        // Assign new <source> only if needed
-        const sourceEl = video.querySelector("source");
-        if (sourceEl && sourceEl.getAttribute("src") !== videos[idx]) {
-          sourceEl.setAttribute("src", videos[idx]);
+      if (idx === activeIndex) {
+        // Load video if not already loaded
+        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
+          video.src = videos[idx];
           video.load();
         }
       } else {
         video.pause();
-        const sourceEl = video.querySelector("source");
-        if (sourceEl) {
-          sourceEl.removeAttribute("src");
-        }
-        video.load(); // Free up memory
+        video.removeAttribute("src");
+        video.load(); // Free memory
       }
     });
   };
@@ -48,8 +39,8 @@ export default function VideoSlider3() {
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
-
     const activeIndex = swiper.realIndex;
+
     unloadInactiveVideos(activeIndex);
 
     const activeVideo = videoRefs.current[activeIndex];
@@ -92,11 +83,12 @@ export default function VideoSlider3() {
   }, []);
 
   return (
-    <div className="w-full relative mb-20">
+    <div className="w-full relative">
       <Swiper
         slidesPerView={1}
         centeredSlides
         loop
+        mousewheel
         keyboard
         pagination={{ clickable: true }}
         navigation
@@ -110,7 +102,9 @@ export default function VideoSlider3() {
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
-                  if (el) videoRefs.current[i] = el;
+                  if (el) {
+                    videoRefs.current[i] = el;
+                  }
                 }}
                 className="w-full min-h-[700px] h-full object-cover"
                 muted
@@ -118,11 +112,7 @@ export default function VideoSlider3() {
                 playsInline
                 preload="metadata"
                 onEnded={onVideoEnded}
-              >
-                {/* Default empty <source> — updated dynamically */}
-                <source type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              />
             </div>
           </SwiperSlide>
         ))}
