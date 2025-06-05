@@ -7,6 +7,8 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import "../../app/assets/BannerSwiper.css";
+
 
 const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
@@ -69,14 +71,7 @@ export default function VideoSlider() {
                 <source src={videoSrc} type="video/mp4" />
               </video>
 
-              <div className="absolute bottom-10 left-10 z-10">
-                <a
-                  href="/offer/ru"
-                  className="px-6 py-3 bg-white text-black font-semibold rounded shadow hover:bg-gray-100 transition"
-                >
-                  Узнать больше
-                </a>
-              </div>
+             
             </div>
           </SwiperSlide>
         ))}
