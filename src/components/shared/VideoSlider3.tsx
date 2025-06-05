@@ -98,7 +98,7 @@ export default function VideoSlider3() {
         onSlideChange={onSlideChange}
       >
         {videos.map((src, i) => (
-          <SwiperSlide key={i} className="w-full min-h-[700px]">
+          <SwiperSlide key={i} className="w-full h-full">
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
@@ -106,7 +106,7 @@ export default function VideoSlider3() {
                     videoRefs.current[i] = el;
                   }
                 }}
-                className="w-full min-h-[700px] h-full object-cover"
+                className="w-full min-h-[700px]  object-cover"
                 muted
                 autoPlay
                 playsInline
