@@ -19,58 +19,46 @@ export default function VideoSlider3() {
 
   const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
+  // Play active video and pause others
+  const handleVideoPlayback = useCallback((activeIndex: number) => {
+    videoRefs.current.forEach((video, idx) => {
+      if (!video) return;
+      if (idx === activeIndex) {
+        video
+          .play()
+          .then(() => setPlay(true))
+          .catch(() => setPlay(false));
+      } else {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+  }, []);
+
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
-
-    const activeIndex = swiper.realIndex;
-    const activeVideo = videoRefs.current[activeIndex];
-
-    if (activeVideo) {
-      activeVideo
-        .play()
-        .then(() => setPlay(true))
-        .catch(() => setPlay(false));
-    }
-  }, []);
+    handleVideoPlayback(swiper.realIndex);
+  }, [handleVideoPlayback]);
 
   useEffect(() => {
     togglePlay();
   }, [togglePlay]);
 
-  const onSlideChange = useCallback((swiper: SwiperType) => {
-    const activeIndex = swiper.realIndex;
-
-    // Pause all videos
-    videoRefs.current.forEach((video, idx) => {
-      if (video) {
-        video.pause();
-        video.currentTime = 0;
-      }
-    });
-
-    // Play current one
-    const activeVideo = videoRefs.current[activeIndex];
-    if (activeVideo) {
-      activeVideo
-        .play()
-        .then(() => setPlay(true))
-        .catch(() => setPlay(false));
-    }
-  }, []);
+  const onSlideChange = useCallback(
+    (swiper: SwiperType) => {
+      handleVideoPlayback(swiper.realIndex);
+    },
+    [handleVideoPlayback]
+  );
 
   const onSwiperInit = useCallback(
     (swiper: SwiperType) => {
       swiperRef.current = swiper;
-      togglePlay();
+      handleVideoPlayback(swiper.realIndex);
     },
-    [togglePlay]
+    [handleVideoPlayback]
   );
-
-  const onVideoEnded = useCallback(() => {
-    swiperRef.current?.slideNext();
-    setPlay(true);
-  }, []);
 
   return (
     <div className="w-full relative">
@@ -92,17 +80,14 @@ export default function VideoSlider3() {
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
-                  if (el) {
-                    videoRefs.current[i] = el;
-                  }
+                  videoRefs.current[i] = el;
                 }}
                 className="w-full min-h-[700px] h-full object-cover"
                 src={src}
                 muted
-                autoPlay
                 playsInline
                 preload="auto"
-                onEnded={onVideoEnded}
+                onEnded={() => setPlay(false)}
               />
             </div>
           </SwiperSlide>
