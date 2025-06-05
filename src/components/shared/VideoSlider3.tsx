@@ -106,7 +106,7 @@ export default function VideoSlider3() {
                     videoRefs.current[i] = el;
                   }
                 }}
-                className="w-full min-h-[700px]  object-cover"
+                className="w-full h-full min-h-[700px]  object-cover"
                 muted
                 autoPlay
                 playsInline
