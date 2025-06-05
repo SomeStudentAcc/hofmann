@@ -18,34 +18,38 @@ export default function VideoSlider3() {
   const [play, setPlay] = useState(true);
   const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
-  // Function to unload non-active videos
- const unloadInactiveVideos = (activeIndex: number) => {
-  videoRefs.current.forEach((video, idx) => {
-    if (!video) return;
+  const unloadInactiveVideos = (activeIndex: number) => {
+    videoRefs.current.forEach((video, idx) => {
+      if (!video) return;
 
-    const shouldLoad = 
-      idx === activeIndex || 
-      idx === (activeIndex + 1) % videos.length || 
-      idx === (activeIndex - 1 + videos.length) % videos.length;
+      const shouldLoad =
+        idx === activeIndex ||
+        idx === (activeIndex + 1) % videos.length ||
+        idx === (activeIndex - 1 + videos.length) % videos.length;
 
-    if (shouldLoad) {
-      if (!video.getAttribute("src")) {
-        video.setAttribute("src", videos[idx]);
-        video.load();
+      if (shouldLoad) {
+        // Assign new <source> only if needed
+        const sourceEl = video.querySelector("source");
+        if (sourceEl && sourceEl.getAttribute("src") !== videos[idx]) {
+          sourceEl.setAttribute("src", videos[idx]);
+          video.load();
+        }
+      } else {
+        video.pause();
+        const sourceEl = video.querySelector("source");
+        if (sourceEl) {
+          sourceEl.removeAttribute("src");
+        }
+        video.load(); // Free up memory
       }
-    } else {
-      video.pause();
-      video.removeAttribute("src");
-      video.load(); // free memory
-    }
-  });
-};
+    });
+  };
 
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
-    const activeIndex = swiper.realIndex;
 
+    const activeIndex = swiper.realIndex;
     unloadInactiveVideos(activeIndex);
 
     const activeVideo = videoRefs.current[activeIndex];
@@ -114,9 +118,12 @@ export default function VideoSlider3() {
                 autoPlay
                 playsInline
                 preload="metadata"
-                src={i === 0 || i === 1 ? videos[i] : undefined}
                 onEnded={onVideoEnded}
-              />
+              >
+                {/* Default empty <source> — updated dynamically */}
+                <source type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </SwiperSlide>
         ))}
