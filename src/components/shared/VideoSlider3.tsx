@@ -86,6 +86,7 @@ export default function VideoSlider3() {
                 src={src}
                 muted
                 playsInline
+                autoPlay
                 preload="auto"
                 onEnded={() => setPlay(false)}
               />
