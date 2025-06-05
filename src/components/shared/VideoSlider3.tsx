@@ -16,34 +16,16 @@ export default function VideoSlider3() {
   const swiperRef = useRef<SwiperType | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [play, setPlay] = useState(true);
-  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
-  // Function to unload non-active videos
-  const unloadInactiveVideos = (activeIndex: number) => {
-    videoRefs.current.forEach((video, idx) => {
-      if (!video) return;
-      if (idx === activeIndex) {
-        // Load video if not already loaded
-        if (!video.src || video.src.indexOf(videos[idx]) === -1) {
-          video.src = videos[idx];
-          video.load();
-        }
-      } else {
-        video.pause();
-        video.removeAttribute("src");
-        video.load(); // Free memory
-      }
-    });
-  };
+  const videos = ["/video11.mp4", "/video22.mp4", "/video33.mp4"];
 
   const togglePlay = useCallback(() => {
     const swiper = swiperRef.current;
     if (!swiper) return;
+
     const activeIndex = swiper.realIndex;
-
-    unloadInactiveVideos(activeIndex);
-
     const activeVideo = videoRefs.current[activeIndex];
+
     if (activeVideo) {
       activeVideo
         .play()
@@ -58,8 +40,16 @@ export default function VideoSlider3() {
 
   const onSlideChange = useCallback((swiper: SwiperType) => {
     const activeIndex = swiper.realIndex;
-    unloadInactiveVideos(activeIndex);
 
+    // Pause all videos
+    videoRefs.current.forEach((video, idx) => {
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+
+    // Play current one
     const activeVideo = videoRefs.current[activeIndex];
     if (activeVideo) {
       activeVideo
@@ -107,10 +97,11 @@ export default function VideoSlider3() {
                   }
                 }}
                 className="w-full min-h-[700px] h-full object-cover"
+                src={src}
                 muted
                 autoPlay
                 playsInline
-                preload="metadata"
+                preload="auto"
                 onEnded={onVideoEnded}
               />
             </div>
