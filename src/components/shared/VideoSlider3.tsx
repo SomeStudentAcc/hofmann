@@ -98,7 +98,7 @@ export default function VideoSlider3() {
         onSlideChange={onSlideChange}
       >
         {videos.map((src, i) => (
-          <SwiperSlide key={i} className="w-full h-full">
+          <SwiperSlide key={i} className="w-full min-h-[700px]">
             <div className="relative w-full h-full overflow-hidden">
               <video
                 ref={(el) => {
